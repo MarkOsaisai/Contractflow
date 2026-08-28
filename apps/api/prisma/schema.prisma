@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrganizationType {
+  CLIENT
+  CONTRACTOR
+  REGULATOR
+}
+
+enum UserRole {
+  PLATFORM_ADMIN
+  ORGANIZATION_ADMIN
+  CLIENT_PM
+  CONTRACTOR_PM
+  HSE_OFFICER
+  FINANCE_OFFICER
+  VIEWER
+}
+
+enum ContractStage {
+  BID
+  AWARD
+  MOBILIZATION
+  EXECUTION
+  COMPLETION
+  COMMISSIONING
+  CLOSED
+}
+
+enum ContractStatus {
+  ACTIVE
+  ON_HOLD
+  BLOCKED
+  COMPLETED
+  CANCELLED
+}
+
+enum ComplianceStatus {
+  PENDING
+  VALID
+  EXPIRED
+  REJECTED
+}
+
+enum VerificationSource {
+  LIVE_JQS
+  MANUAL
+}
+
+enum PaymentStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PAID
+  DISPUTED
+}
+
+enum AuditEventType {
+  LOGIN
+  LOGOUT
+  FAILED_LOGIN
+  CREATE
+  UPDATE
+  DELETE
+  DOCUMENT_UPLOAD
+  DOCUMENT_DOWNLOAD
+  DOCUMENT_DELETE
+  PERMISSION_CHANGE
+  LIFECYCLE_CHANGE
+  PAYMENT_CHANGE
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  type      OrganizationType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users     User[]
+  contracts Contract[] @relation("OwningOrganization")
+  clientContracts Contract[] @relation("ClientOrganization")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  organizationId String
+  email          String   @unique
+  displayName    String
+  role           UserRole
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  contractAccess ContractParty[]
+  auditEvents    AuditLog[]
+  activities     Activity[]
+  notifications  Notification[]
+}
+
+model Contract {
+  id                   String   @id @default(uuid())
+  organizationId       String
+  clientOrganizationId String
+  reference            String   @unique
+  title                String
+  stage                ContractStage @default(BID)
+  status               ContractStatus @default(ACTIVE)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  organization         Organization @relation("OwningOrganization", fields: [organizationId], references: [id])
+  clientOrganization   Organization @relation("ClientOrganization", fields: [clientOrganizationId], references: [id])
+  parties              ContractParty[]
+  documents            Document[]
+  complianceRecords    ComplianceRecord[]
+  paymentMilestones    PaymentMilestone[]
+  activities           Activity[]
+  notifications        Notification[]
+  @@index([organizationId, stage, status])
+}
+
+model ContractParty {
+  id             String   @id @default(uuid())
+  contractId     String
+  userId         String
+  permission     String
+  createdAt      DateTime @default(now())
+  contract       Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([contractId, userId])
+}
+
+model Document {
+  id             String   @id @default(uuid())
+  contractId     String
+  name           String
+  category       String
+  currentVersion Int      @default(1)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  contract       Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  versions       DocumentVersion[]
+  @@index([contractId, category])
+}
+
+model DocumentVersion {
+  id          String   @id @default(uuid())
+  documentId  String
+  version     Int
+  storageKey  String   @unique
+  contentType String
+  sizeBytes   Int
+  checksum    String
+  createdAt   DateTime @default(now())
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  @@unique([documentId, version])
+}
+
+model ComplianceRecord {
+  id                 String   @id @default(uuid())
+  contractId         String
+  certificateType    String
+  status             ComplianceStatus @default(PENDING)
+  verificationSource VerificationSource
+  verifiedAt         DateTime?
+  verifiedById       String?
+  expiresAt          DateTime?
+  version            Int      @default(1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  contract           Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  @@index([contractId, status, expiresAt])
+}
+
+model PaymentMilestone {
+  id          String   @id @default(uuid())
+  contractId  String
+  title       String
+  amountKobo  BigInt
+  currency    String   @default("NGN")
+  dueDate     DateTime?
+  status      PaymentStatus @default(DRAFT)
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  contract    Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  @@index([contractId, status, dueDate])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  organizationId String
+  actorId     String?
+  eventType   AuditEventType
+  entityType  String
+  entityId    String
+  oldValue    Json?
+  newValue    Json?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  actor       User?    @relation(fields: [actorId], references: [id])
+  @@index([organizationId, entityType, entityId, createdAt])
+}
+
+model Activity {
+  id             String   @id @default(uuid())
+  organizationId String
+  contractId     String
+  actorId        String?
+  type           String
+  message        String
+  metadata       Json?
+  createdAt      DateTime @default(now())
+  contract       Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  actor          User?    @relation(fields: [actorId], references: [id])
+  @@index([contractId, createdAt])
+  @@index([organizationId, createdAt])
+}
+
+model Notification {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+  contractId     String?
+  type           String
+  title          String
+  message        String
+  readAt         DateTime?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contract       Contract? @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  @@index([userId, readAt, createdAt])
+  @@index([organizationId, createdAt])
+}
