@@ -72,9 +72,13 @@ Areas of collaboration may include:
 * Future data pipelines
 * Business intelligence and reporting infrastructure
 
+## ContractFlow ERD
+<img width="1870" height="1567" alt="contractflowERD" src="https://github.com/user-attachments/assets/84f58f9f-ad4f-4222-a01d-0ce10a2b0873" />
+
 ## Planned Data Areas
 
 As ContractFlow progresses toward the MVP, the platform is expected to generate data across several operational areas.
+
 
 ### HSE Management
 
