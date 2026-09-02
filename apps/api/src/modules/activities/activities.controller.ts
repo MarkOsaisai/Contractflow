@@ -3,17 +3,17 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { JwtPayload } from '../auth/jwt-payload.interface';
-import { ContractsService } from './contracts.service';
+import { ActivitiesService } from './activities.service';
 
-@ApiTags('contracts')
+@ApiTags('activities')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller({ path: 'contracts', version: '1' })
-export class ContractsController {
-  constructor(private readonly contractsService: ContractsService) {}
+@Controller({ path: 'activities', version: '1' })
+export class ActivitiesController {
+  constructor(private readonly activitiesService: ActivitiesService) {}
 
   @Get()
   findAll(@CurrentUser() user: JwtPayload) {
-    return this.contractsService.findForOrganization(user.organizationId);
+    return this.activitiesService.findForOrganization(user.organizationId);
   }
 }
