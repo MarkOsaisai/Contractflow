@@ -7,3 +7,27 @@ coverage
 !.env.example
 *.log
 *.tsbuildinfo
+# Terraform local state
+*.tfstate
+*.tfstate.*
+
+# Terraform local files
+.terraform/
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Terraform variable files containing secrets
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Local Terraform overrides
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration
+.terraformrc
+terraform.rc
