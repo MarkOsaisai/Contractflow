@@ -97,11 +97,88 @@ Supporting Services
         +-- CI/CD
 ```
 
+### Target ContractFlow Cloud Architecture
+
+```mermaid
+flowchart TB
+
+    Users["ContractFlow Users<br/>Contractor / Client / PM / HSE / Finance"]
+
+    subgraph Cloud["ContractFlow Cloud Environment"]
+
+        subgraph Access["Application Access Layer"]
+            Gateway["Application Ingress / Gateway"]
+        end
+
+        subgraph App["Application Layer"]
+            Web["Next.js Frontend"]
+            API["NestJS Backend API"]
+        end
+
+        subgraph Data["Data Layer"]
+            DB[("PostgreSQL Database")]
+            Redis["Redis Cache"]
+            Storage["Object / Document Storage"]
+        end
+
+        subgraph Security["Security and Operations"]
+            KV["Azure Key Vault"]
+            Monitor["Monitoring and Logging"]
+            Backup["Backup and Recovery"]
+        end
+
+    end
+
+    Users -->|HTTPS| Gateway
+    Gateway --> Web
+    Web --> API
+
+    API --> DB
+    API --> Redis
+    API --> Storage
+
+    API -. Secrets .-> KV
+    Web -. Telemetry .-> Monitor
+    API -. Telemetry .-> Monitor
+
+    DB -. Backup .-> Backup
+    Storage -. Backup .-> Backup
+```
+
+> **Status:** This represents the target ContractFlow cloud architecture. Some components are planned and have not yet been provisioned in Terraform.
+
 ---
 
 ## 4. Azure Network Architecture
 
 The current Terraform foundation defines a dedicated Azure Virtual Network for the ContractFlow Dev environment.
+
+### Current Terraform Network Design
+
+```mermaid
+flowchart TB
+
+    Internet["Internet / ContractFlow Users"]
+
+    subgraph VNet["ContractFlow VNet - 10.10.0.0/16"]
+
+        GatewaySubnet["app_gateway subnet<br/>10.10.1.0/24"]
+
+        AppSubnet["container_apps subnet<br/>10.10.2.0/23"]
+
+        DataSubnet["data subnet<br/>10.10.4.0/24"]
+
+        PrivateSubnet["private_endpoints subnet<br/>10.10.5.0/24"]
+
+    end
+
+    Internet -->|HTTPS| GatewaySubnet
+    GatewaySubnet --> AppSubnet
+    AppSubnet --> DataSubnet
+    AppSubnet --> PrivateSubnet
+```
+
+> **Note:** The Terraform currently defines these subnet ranges. The subnet names represent their intended architectural roles and do not by themselves indicate that Application Gateway, Container Apps, or private endpoints have already been deployed.
 
 ### Virtual Network
 
@@ -182,6 +259,32 @@ location     = "eastus"
 ContractFlow will use Git-based collaboration and automated CI/CD pipelines to support controlled application and infrastructure changes.
 
 The objective is to ensure that changes are reviewed, tested, and promoted through the appropriate environment before reaching Production.
+
+### CI/CD Deployment Flow
+
+```mermaid
+flowchart LR
+
+    Developer["Developer"]
+    GitHub["GitHub Repository"]
+    Actions["GitHub Actions"]
+
+    subgraph Environments["ContractFlow Environments"]
+        Dev["Development"]
+        Staging["Staging"]
+        Approval["Manual Approval"]
+        Prod["Production"]
+    end
+
+    Developer -->|Push / Pull Request| GitHub
+    GitHub --> Actions
+    Actions -->|Build, Test and Validate| Dev
+    Dev -->|Promote| Staging
+    Staging --> Approval
+    Approval -->|Approved Release| Prod
+```
+
+> **Status:** This diagram represents the intended ContractFlow CI/CD deployment flow. The final workflow will depend on the approved cloud hosting platform and environment configuration.
 
 ### Branching Approach
 
