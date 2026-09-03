@@ -13,11 +13,12 @@ import { ActivitiesModule } from './modules/activities/activities.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { AuditModule } from './modules/audit/audit.module';
-import { PrismaService } from './database/prisma.service';
+import { DatabaseModule } from './database/database.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    DatabaseModule,
     AuthModule,
     UsersModule,
     OrganizationsModule,
@@ -32,6 +33,5 @@ import { PrismaService } from './database/prisma.service';
     AuditModule,
   ],
   controllers: [HealthController],
-  providers: [PrismaService],
 })
 export class AppModule {}

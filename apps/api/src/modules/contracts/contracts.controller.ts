@@ -1,19 +1,19 @@
-import { BadRequestException, Controller, Get, Headers } from '@nestjs/common';
-import { ApiHeader, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { JwtPayload } from '../auth/jwt-payload.interface';
 import { ContractsService } from './contracts.service';
 
 @ApiTags('contracts')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller({ path: 'contracts', version: '1' })
 export class ContractsController {
   constructor(private readonly contractsService: ContractsService) {}
 
   @Get()
-  @ApiHeader({ name: 'x-organization-id', required: true })
-  findAll(@Headers('x-organization-id') organizationId?: string) {
-    if (!organizationId?.trim()) {
-      throw new BadRequestException('x-organization-id header is required');
-    }
-
-    return this.contractsService.findForOrganization(organizationId);
+  findAll(@CurrentUser() user: JwtPayload) {
+    return this.contractsService.findForOrganization(user.organizationId);
   }
 }

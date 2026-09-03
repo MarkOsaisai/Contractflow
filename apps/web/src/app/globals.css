@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --ink: #17231d;
   --muted: #5c6c62;
@@ -53,6 +55,20 @@ button {
   font: inherit;
   cursor: pointer;
 }
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.button-link {
+  display: inline-block;
+  margin-top: 0;
+  background: var(--ink);
+  color: white;
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-weight: normal;
+  text-decoration: none;
+}
 .overview {
   border-top: 1px solid var(--ink);
   padding: 22px 0 38px;
@@ -104,6 +120,85 @@ a {
   color: var(--accent);
   font-weight: bold;
 }
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+.auth-panel {
+  width: min(100%, 460px);
+  border-top: 1px solid var(--ink);
+  padding-top: 22px;
+}
+.auth-panel h1 {
+  margin-top: 12px;
+  font-size: 2.5rem;
+}
+.auth-copy {
+  margin-top: 16px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.auth-form {
+  display: grid;
+  gap: 18px;
+  margin-top: 30px;
+}
+.auth-form label {
+  display: grid;
+  gap: 7px;
+  font-weight: bold;
+}
+.auth-form input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  padding: 11px 12px;
+  color: var(--ink);
+  font: inherit;
+}
+.auth-footer,
+.empty-state {
+  margin-top: 24px;
+  color: var(--muted);
+}
+.auth-footer a {
+  margin: 0;
+}
+.form-error {
+  color: #a72518;
+  line-height: 1.4;
+}
+.account-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.contract-list {
+  display: grid;
+  gap: 1px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+.contract-list article {
+  display: grid;
+  gap: 10px;
+  background: var(--surface);
+  padding: 20px;
+}
+.contract-list h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.contract-list article > p:last-child {
+  color: var(--muted);
+}
+.loading-page {
+  min-height: 100vh;
+  padding: 32px;
+}
 @media (max-width: 640px) {
   main {
     padding: 22px 16px 40px;
@@ -117,5 +212,10 @@ a {
   }
   .overview > h2 {
     font-size: 2.25rem;
-  /* } */
+  }
+  .account-actions {
+    align-items: flex-end;
+    flex-direction: column;
+    gap: 8px;
+  }
 }

@@ -92,6 +92,7 @@ model User {
   organizationId String
   email          String   @unique
   displayName    String
+  passwordHash   String
   role           UserRole
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())

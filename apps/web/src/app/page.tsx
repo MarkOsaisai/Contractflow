@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const workspaces = [
   ["Contracts", "Manage bids, awards, execution, and commissioning."],
   ["Compliance", "Track HSE certificates, permits, and verification."],
@@ -13,7 +15,9 @@ export default function Home() {
           <p className="eyebrow">Operations Platform</p>
           <h1>ContractFlow</h1>
         </div>
-        <button type="button">Sign in</button>
+        <Link className="button-link" href="/login">
+          Sign in
+        </Link>
       </header>
       <section className="overview" aria-labelledby="overview-heading">
         <p className="eyebrow">Portfolio overview</p>
@@ -40,7 +44,7 @@ export default function Home() {
           <article key={title}>
             <h2>{title}</h2>
             <p>{description}</p>
-            <a href={`/${title.toLowerCase()}`}>Open workspace</a>
+            <Link href="/dashboard">Open workspace</Link>
           </article>
         ))}
       </section>
