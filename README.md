@@ -21,6 +21,90 @@ ContractFlow is an oil and gas contract operations platform covering bid through
 
 The API is served on `http://localhost:3001/api/v1`; Swagger is available at `/api/docs`.
 
+# ContractFlow Workspace Dashboard KPIs
+
+**NDI Group 2**
+
+This document lists the key performance indicators shown on the dashboard of each of ContractFlow's four department workspaces — Contractor, Client Project Management, HSE, and Finance.
+
+Each KPI maps directly to the existing data model:
+
+- Contract
+- Stage
+- Document
+- Compliance Record
+- Milestone
+- Payment
+- Activity Log
+
+Nothing here requires data beyond what the schema already captures.
+
+---
+
+## Contractor Workspace
+
+| KPI                                      | What It Shows                                                  |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| **Compliance Status**                    | Overall standing — compliant / needs attention / non-compliant |
+| **Documents Expiring in 30 Days**        | Count of certs/permits approaching expiry                      |
+| **Documents Expired**                    | Count of lapsed documents blocking site access                 |
+| **Current Contract Stage**               | Where the active contract sits in the 7-stage pipeline         |
+| **Next Milestone Due**                   | Milestone name, amount, and due date                           |
+| **Payment Status**                       | Not due / pending / approved / paid, for the active milestone  |
+| **Open Blockers Assigned to Contractor** | Count of issues waiting on contractor action                   |
+
+---
+
+## Client Project Management Workspace
+
+| KPI                             | What It Shows                                                       |
+| ------------------------------- | ------------------------------------------------------------------- |
+| **Active Contracts by Stage**   | Count of contracts at each of the 7 stages                          |
+| **Contracts Needing Attention** | Count flagged non-compliant or blocked                              |
+| **Average Time per Stage**      | Cycle time — how long contracts typically sit in each stage         |
+| **Open Blockers by Source**     | Count of blockers, broken down by HSE / Finance / Legal / Logistics |
+| **Milestones Pending Approval** | Count awaiting Client PM sign-off                                   |
+| **Contractor Compliance Rate**  | % of active contractors currently fully compliant                   |
+| **Stalled Contracts**           | Contracts with no stage movement in X days                          |
+
+---
+
+## HSE Workspace
+
+| KPI                                      | What It Shows                                      |
+| ---------------------------------------- | -------------------------------------------------- |
+| **Certifications Expiring in 7/30 Days** | Near-term compliance risk, split by urgency        |
+| **Certifications Expired**               | Count currently lapsed, by contractor              |
+| **Open Incidents**                       | Count by severity (low/medium/high/critical)       |
+| **Incident Response Time**               | Average time from report to “investigating” status |
+| **Inspection Pass Rate**                 | % of HSE inspections marked Pass in a given period |
+| **Non-Compliant Contractors**            | Count currently restricted from site access        |
+| **Pending Document Reviews**             | Count of uploaded documents awaiting verification  |
+
+---
+
+## Finance Workspace
+
+| KPI                                          | What It Shows                                                             |
+| -------------------------------------------- | ------------------------------------------------------------------------- |
+| **Total Milestone Value (Active Contracts)** | Sum of all milestone amounts across active contracts                      |
+| **Payments Due This Period**                 | Count and value of milestones due in the next 7/30 days                   |
+| **Payments Overdue**                         | Count and value of milestones past due date, unpaid                       |
+| **Average Payment Cycle Time**               | Days from milestone approval to actual payment                            |
+| **Payment Disputes/Held Invoices**           | Count of invoices flagged or on hold (e.g., PO mismatch)                  |
+| **Payments Processed This Period**           | Total amount paid out, current week/month                                 |
+| **Milestone Approval Backlog**               | Count of milestones pending Client PM approval before payment can proceed |
+
+---
+
+## Design Notes
+
+- **Shared logic, different lens:** Several KPIs (compliance status, milestone status) appear in more than one workspace, but the scope differs. The Contractor sees their own numbers, Client PM and HSE see it rolled up across all contractors, and Finance sees it in monetary terms. This is consistent with the row-level permissions model established earlier.
+
+- **Core problem indicators:** “Stalled Contracts” and “Non-Compliant Contractors” are the two KPIs that most directly answer the core problem statement — surfacing exactly who is holding up progress, which is the reason for building this over email-based tracking.
+
+- **Data model alignment:** Every KPI here maps onto the Milestone, Compliance Record, Document, and Activity Log tables already in the ERD.
+
 ## Software Engineering Task Breakdown
 
 **Schedule:** Aug 24 - Oct 23, 2026

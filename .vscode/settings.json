@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
         "contractflow"
-    ]
+    ],
+    "css.lint.unknownAtRules": "ignore"
 }
