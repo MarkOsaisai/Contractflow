@@ -1,10 +1,8 @@
+import { UserRole } from '@prisma/client';
+
 export interface JwtPayload {
   sub: string;
-  email: string;
   organizationId: string;
-  role: string;
-}
-
-export interface AuthenticatedRequest extends Request {
-  user: JwtPayload;
+  role: UserRole;
+  email: string;
 }

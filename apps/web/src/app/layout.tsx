@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "ContractFlow",
@@ -13,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

@@ -16,3 +16,5 @@ coverage
 crash.log
 override.tf
 override.tf.json
+
+apps/api/prisma/imports/

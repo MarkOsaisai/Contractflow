@@ -1,135 +1,59 @@
-import axios, { AxiosInstance, AxiosError } from "axios";
+export type AuthUser = {
+  id: string;
+  email: string;
+  displayName: string;
+  role: string;
+  organizationId: string;
+};
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+export type AuthSession = {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUser;
+};
 
-export class ApiClient {
-  private client: AxiosInstance;
-  private refreshing = false;
-  private failedQueue: Array<{
-    resolve: (value?: any) => void;
-    reject: (reason?: any) => void;
-  }> = [];
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
-  constructor() {
-    this.client = axios.create({
-      baseURL: API_BASE_URL,
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    this.setupInterceptors();
-  }
-
-  private setupInterceptors() {
-    // Request interceptor - add auth token
-    this.client.interceptors.request.use(
-      (config) => {
-        const token = this.getAccessToken();
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
-    // Response interceptor - handle token refresh
-    this.client.interceptors.response.use(
-      (response) => response,
-      async (error: AxiosError) => {
-        const originalRequest = error.config as any;
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
-          if (this.refreshing) {
-            return new Promise((resolve, reject) => {
-              this.failedQueue.push({ resolve, reject });
-            })
-              .then((token) => {
-                originalRequest.headers.Authorization = `Bearer ${token}`;
-                return this.client(originalRequest);
-              })
-              .catch((err) => Promise.reject(err));
-          }
-
-          originalRequest._retry = true;
-          this.refreshing = true;
-
-          try {
-            const refreshToken = this.getRefreshToken();
-            if (!refreshToken) throw new Error("No refresh token");
-
-            const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-              refreshToken,
-            });
-
-            const { accessToken } = response.data;
-            this.setAccessToken(accessToken);
-
-            this.failedQueue.forEach(({ resolve }) => resolve(accessToken));
-            this.failedQueue = [];
-
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-            return this.client(originalRequest);
-          } catch (err) {
-            this.clearTokens();
-            this.failedQueue.forEach(({ reject }) => reject(err));
-            this.failedQueue = [];
-            window.location.href = "/auth/login";
-            return Promise.reject(err);
-          } finally {
-            this.refreshing = false;
-          }
-        }
-
-        return Promise.reject(error);
-      }
-    );
-  }
-
-  // Auth token management
-  private getAccessToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("accessToken");
-  }
-
-  private setAccessToken(token: string) {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("accessToken", token);
-  }
-
-  private getRefreshToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("refreshToken");
-  }
-
-  private clearTokens() {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-  }
-
-  // API methods
-  public get<T>(url: string, config?: any) {
-    return this.client.get<T>(url, config);
-  }
-
-  public post<T>(url: string, data?: any, config?: any) {
-    return this.client.post<T>(url, data, config);
-  }
-
-  public put<T>(url: string, data?: any, config?: any) {
-    return this.client.put<T>(url, data, config);
-  }
-
-  public patch<T>(url: string, data?: any, config?: any) {
-    return this.client.patch<T>(url, data, config);
-  }
-
-  public delete<T>(url: string, config?: any) {
-    return this.client.delete<T>(url, config);
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
   }
 }
 
-export const apiClient = new ApiClient();
+export async function apiRequest<T>(path: string, init: RequestInit = {}, accessToken?: string): Promise<T> {
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...init.headers,
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { message?: string | string[] } | null;
+    const message = Array.isArray(body?.message) ? body.message.join(", ") : body?.message;
+    throw new ApiError(message ?? "The request could not be completed.", response.status);
+  }
+
+  return response.json() as Promise<T>;
+}
+
+export function login(email: string, password: string) {
+  return apiRequest<AuthSession>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function register(payload: {
+  email: string;
+  password: string;
+  displayName: string;
+  organizationName: string;
+}) {
+  return apiRequest<AuthSession>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}

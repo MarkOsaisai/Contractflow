@@ -1,16 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 
 @Injectable()
 export class ActivitiesService {
   constructor(private readonly prisma: PrismaService) {}
-
-  findForOrganization(organizationId: string) {
-    return this.prisma.activity.findMany({
-      where: { organizationId },
-      include: { actor: { select: { id: true, displayName: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
+  async list(organizationId: string, contractId: string) {
+    if (!(await this.prisma.contract.findFirst({ where: { id: contractId, organizationId } }))) throw new NotFoundException('Contract not found');
+    return this.prisma.activity.findMany({ where: { contractId, organizationId }, include: { actor: { select: { id: true, displayName: true } } }, orderBy: { createdAt: 'desc' } });
   }
 }

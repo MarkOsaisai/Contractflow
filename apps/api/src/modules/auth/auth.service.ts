@@ -1,8 +1,5 @@
-import {
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service';
@@ -10,153 +7,68 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { JwtPayload } from './jwt-payload.interface';
 
-const ACCESS_TOKEN_TTL = '15m';
-const REFRESH_TOKEN_TTL = '7d';
-const BCRYPT_ROUNDS = 12;
-
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService,
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
   ) {}
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existing) throw new ConflictException('Email is already registered');
+
+    const organization = await this.prisma.organization.create({
+      data: { name: dto.organizationName, type: dto.organizationType },
     });
-    if (existing) {
-      throw new ConflictException('An account with this email already exists');
-    }
-
-    const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
-
-    const user = await this.prisma.$transaction(async (tx) => {
-      const organization = await tx.organization.create({
-        data: { name: dto.organizationName, type: 'CONTRACTOR' },
-      });
-
-      return tx.user.create({
-        data: {
-          email: dto.email,
-          displayName: dto.name,
-          passwordHash,
-          role: 'ORGANIZATION_ADMIN',
-          organizationId: organization.id,
-        },
-      });
+    const user = await this.prisma.user.create({
+      data: {
+        email: dto.email,
+        displayName: dto.displayName,
+        passwordHash: await bcrypt.hash(dto.password, 12),
+        role: dto.role,
+        organizationId: organization.id,
+      },
     });
-
-    return this.buildAuthResponse(user);
+    return this.tokensFor(user);
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-    if (!user || !user.isActive) {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (!user || !user.isActive || !(await bcrypt.compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Invalid email or password');
     }
-
-    const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!passwordMatches) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
-
-    return this.buildAuthResponse(user);
+    return this.tokensFor(user);
   }
 
   async refresh(refreshToken: string) {
-    let payload: JwtPayload;
     try {
-      payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET,
+      const payload = await this.jwt.verifyAsync<JwtPayload>(refreshToken, {
+        secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
       });
+      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+      if (!user || !user.isActive) throw new UnauthorizedException();
+      return this.tokensFor(user);
     } catch {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException('Invalid refresh token');
     }
-
-    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-    if (!user || !user.isActive) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-
-    const accessToken = await this.signAccessToken(user);
-    return { accessToken };
   }
 
-  async me(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-    return this.toPublicUser(user);
-  }
-
-  private async buildAuthResponse(user: {
-    id: string;
-    email: string;
-    displayName: string;
-    role: string;
-    organizationId: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }) {
+  private async tokensFor(user: { id: string; organizationId: string; role: JwtPayload['role']; email: string; displayName: string }) {
+    const payload: JwtPayload = {
+      sub: user.id,
+      organizationId: user.organizationId,
+      role: user.role,
+      email: user.email,
+    };
     const [accessToken, refreshToken] = await Promise.all([
-      this.signAccessToken(user),
-      this.signRefreshToken(user),
+      this.jwt.signAsync(payload),
+      this.jwt.signAsync(payload, {
+        secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
+        expiresIn: 604800,
+      }),
     ]);
-
-    return {
-      accessToken,
-      refreshToken,
-      user: this.toPublicUser(user),
-    };
-  }
-
-  private signAccessToken(user: { id: string; email: string; organizationId: string; role: string }) {
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      organizationId: user.organizationId,
-      role: user.role,
-    };
-    return this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_ACCESS_SECRET,
-      expiresIn: ACCESS_TOKEN_TTL,
-    });
-  }
-
-  private signRefreshToken(user: { id: string; email: string; organizationId: string; role: string }) {
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      organizationId: user.organizationId,
-      role: user.role,
-    };
-    return this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_REFRESH_SECRET,
-      expiresIn: REFRESH_TOKEN_TTL,
-    });
-  }
-
-  private toPublicUser(user: {
-    id: string;
-    email: string;
-    displayName: string;
-    role: string;
-    organizationId: string;
-    createdAt: Date;
-    updatedAt: Date;
-  }) {
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.displayName,
-      role: user.role,
-      organizationId: user.organizationId,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+    return { accessToken, refreshToken, user: { id: user.id, email: user.email, displayName: user.displayName, role: user.role, organizationId: user.organizationId } };
   }
 }

@@ -24,13 +24,13 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "autoprefixer": "^10.4.16",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "eslint": "^9.0.0",
-    "eslint-config-next": "^15.0.0",
-    "postcss": "^8.4.31",
+    "eslint-config-next": "^16.0.0",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.0.0"
   }
 }
