@@ -7,3 +7,12 @@ coverage
 !.env.example
 *.log
 *.tsbuildinfo
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+override.tf
+override.tf.json
