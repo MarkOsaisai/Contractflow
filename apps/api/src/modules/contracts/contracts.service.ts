@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
+import { Injectable } from "@nestjs/common";
+import { PrismaService } from "../../database/prisma.service";
 
 @Injectable()
 export class ContractsService {
@@ -9,7 +9,7 @@ export class ContractsService {
     return this.prisma.contract.findMany({
       where: { organizationId },
       include: { clientOrganization: { select: { id: true, name: true } } },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: { updatedAt: "desc" },
     });
   }
 }

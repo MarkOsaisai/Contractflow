@@ -1,5 +1,5 @@
-import { ComplianceStatus, VerificationSource } from '@prisma/client';
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import { ComplianceStatus, VerificationSource } from "@prisma/client";
+import { IsDateString, IsEnum, IsOptional, IsString } from "class-validator";
 
 export class CreateComplianceDto {
   @IsString()

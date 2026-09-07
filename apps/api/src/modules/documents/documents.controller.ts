@@ -1,15 +1,15 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { JwtPayload } from '../auth/jwt-payload.interface';
-import { CreateDocumentDto } from './dto/create-document.dto';
-import { DocumentsService } from './documents.service';
+import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiTags } from "@nestjs/swagger";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { JwtAuthGuard } from "../../common/guards/jwt-auth.guard";
+import { JwtPayload } from "../auth/jwt-payload.interface";
+import { CreateDocumentDto } from "./dto/create-document.dto";
+import { DocumentsService } from "./documents.service";
 
-@ApiTags('documents')
+@ApiTags("documents")
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller({ path: 'documents', version: '1' })
+@Controller({ path: "documents", version: "1" })
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
