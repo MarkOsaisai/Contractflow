@@ -28,7 +28,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-4">
             <div className="text-sm">
-              <p className="font-medium text-slate-900">{user?.name}</p>
+              <p className="font-medium text-slate-900">{user?.displayName}</p>
               <p className="text-slate-600 text-xs">{user?.email}</p>
             </div>
             <button
