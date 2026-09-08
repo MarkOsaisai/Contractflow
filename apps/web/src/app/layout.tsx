@@ -13,6 +13,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async />
       <body>
         <Providers>{children}</Providers>
       </body>

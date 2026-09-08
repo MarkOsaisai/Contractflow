@@ -1,101 +1,70 @@
-"use client";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  LayoutDashboard,
+  FileText,
+  ShieldCheck,
+  Flag,
+  CreditCard,
+  Settings,
+} from 'lucide-react';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
-
-interface SidebarItem {
-  label: string;
-  href: string;
-  icon?: string;
-}
-
-const workspaceMenus: Record<string, SidebarItem[]> = {
-  contractor: [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "My Contracts", href: "/contracts" },
-    { label: "Documents", href: "/documents" },
-    { label: "Payments", href: "/payments" },
-    { label: "Activities", href: "/activities" },
-  ],
-  client_pm: [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Projects", href: "/contracts" },
-    { label: "Contractors", href: "/contractors" },
-    { label: "Approvals", href: "/approvals" },
-    { label: "Reports", href: "/reports" },
-  ],
-  hse: [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Compliance", href: "/compliance" },
-    { label: "Certifications", href: "/certifications" },
-    { label: "Incidents", href: "/incidents" },
-    { label: "Audit Log", href: "/audit" },
-  ],
-  finance: [
-    { label: "Dashboard", href: "/dashboard" },
-    { label: "Invoices", href: "/invoices" },
-    { label: "Payments", href: "/payments" },
-    { label: "Reports", href: "/reports" },
-    { label: "Budgets", href: "/budgets" },
-  ],
-};
+const navItems = [
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Contracts', href: '/contracts', icon: FileText },
+  { name: 'Documents', href: '/documents', icon: FileText },
+  { name: 'Compliance', href: '/compliance', icon: ShieldCheck },
+  { name: 'Milestones', href: '/milestones', icon: Flag },
+  { name: 'Payments', href: '/payments', icon: CreditCard },
+  { name: 'Settings', href: '/settings', icon: Settings },
+];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
-
-  const role = user?.role || "CONTRACTOR_PM";
-  const roleToWorkspace: Record<string, string> = {
-    CONTRACTOR_PM: "contractor",
-    CLIENT_PM: "client_pm",
-    HSE_OFFICER: "hse",
-    FINANCE_OFFICER: "finance",
-    ORGANIZATION_ADMIN: "contractor",
-    PLATFORM_ADMIN: "contractor",
-    VIEWER: "contractor",
-  };
-
-  const workspace = roleToWorkspace[role];
-  const menuItems = workspaceMenus[workspace] || workspaceMenus.contractor;
 
   return (
-    <aside className="w-64 bg-slate-900 text-white min-h-screen">
-      <div className="p-6 border-b border-slate-800">
-        <h2 className="text-sm font-semibold text-slate-400 uppercase">
-          {workspace.replace("_", " ")}
-        </h2>
-        <p className="text-xs text-slate-500 mt-1">Workspace</p>
+    <div className="flex h-screen w-64 flex-col bg-[#111111] text-zinc-400">
+      <div className="flex h-16 shrink-0 items-center px-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500">
+            {/* Logo placeholder */}
+          </div>
+          <span className="text-xl font-semibold text-white">ContractFlow</span>
+        </div>
       </div>
-
-      <nav className="p-4 space-y-1">
-        {menuItems.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+      <nav className="flex flex-1 flex-col gap-1 px-4 py-6">
+        {navItems.map((item) => {
+          const isActive = pathname.startsWith(item.href);
           return (
             <Link
-              key={item.href}
+              key={item.name}
               href={item.href}
-              className={`block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                isActive
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
+              className={twMerge(
+                clsx(
+                  'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-indigo-500 text-white'
+                    : 'hover:bg-zinc-800 hover:text-white'
+                )
+              )}
             >
-              {item.label}
+              <item.icon className="h-5 w-5 shrink-0" />
+              {item.name}
             </Link>
           );
         })}
       </nav>
-
-      <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800 w-64">
-        <Link
-          href="/settings"
-          className="block px-4 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
-        >
-          Settings
-        </Link>
+      <div className="mt-auto p-6">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 shrink-0 rounded-full bg-white" />
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-white">Sarah Jenkins</span>
+            <span className="text-xs text-zinc-500">Lead Portfolio PM</span>
+          </div>
+        </div>
       </div>
-    </aside>
+    </div>
   );
 }
