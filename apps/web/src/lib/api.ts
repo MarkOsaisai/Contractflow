@@ -57,3 +57,19 @@ export function register(payload: {
     body: JSON.stringify(payload),
   });
 }
+type ApiResponse<T> = { data: T };
+
+function wrap<T>(promise: Promise<T>): Promise<ApiResponse<T>> {
+  return promise.then((data) => ({ data }));
+}
+
+export const apiClient = {
+  get: <T>(path: string, accessToken?: string) =>
+    wrap<T>(apiRequest<T>(path, { method: "GET" }, accessToken)),
+  post: <T>(path: string, body?: unknown, accessToken?: string) =>
+    wrap<T>(apiRequest<T>(path, { method: "POST", body: JSON.stringify(body) }, accessToken)),
+  patch: <T = void>(path: string, body?: unknown, accessToken?: string) =>
+    wrap<T>(apiRequest<T>(path, { method: "PATCH", body: JSON.stringify(body) }, accessToken)),
+  delete: <T = void>(path: string, accessToken?: string) =>
+    wrap<T>(apiRequest<T>(path, { method: "DELETE" }, accessToken)),
+};

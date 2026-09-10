@@ -1,0 +1,77 @@
+name: ContractFlow CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  application:
+    name: Application CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate --workspace=@contractflow/api
+
+      - name: Lint applications
+        run: npm run lint
+
+      - name: Build applications
+        run: npm run build
+
+  terraform:
+    name: Terraform CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for Terraform configuration
+        id: terraform-check
+        shell: bash
+        run: |
+          if find infra/terraform -name "*.tf" -type f | grep -q .; then
+            echo "terraform_present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "terraform_present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Terraform
+        if: steps.terraform-check.outputs.terraform_present == 'true'
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Format Check
+        if: steps.terraform-check.outputs.terraform_present == 'true'
+        working-directory: infra/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        if: steps.terraform-check.outputs.terraform_present == 'true'
+        working-directory: infra/terraform
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        if: steps.terraform-check.outputs.terraform_present == 'true'
+        working-directory: infra/terraform
+        run: terraform validate

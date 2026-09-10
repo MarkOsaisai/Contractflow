@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { PrismaService } from "../../database/prisma.service";
 
 @Injectable()
 export class DocumentsService {
@@ -8,8 +8,8 @@ export class DocumentsService {
   findForOrganization(organizationId: string) {
     return this.prisma.document.findMany({
       where: { contract: { organizationId } },
-      include: { versions: { orderBy: { version: 'desc' }, take: 1 } },
-      orderBy: { updatedAt: 'desc' },
+      include: { versions: { orderBy: { version: "desc" }, take: 1 } },
+      orderBy: { updatedAt: "desc" },
     });
   }
 
@@ -21,7 +21,7 @@ export class DocumentsService {
       where: { id: data.contractId, organizationId },
     });
     if (!contract) {
-      throw new NotFoundException('Contract not found');
+      throw new NotFoundException("Contract not found");
     }
 
     return this.prisma.document.create({

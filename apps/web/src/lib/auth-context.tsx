@@ -7,14 +7,24 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { type AuthSession, type AuthUser } from "./api";
+import { login as apiLogin, register as apiRegister, type AuthSession, type AuthUser } from "./api";
 
 type AuthContextValue = {
   isReady: boolean;
+  isLoading: boolean;
+  isAuthenticated: boolean;
   session: AuthSession | null;
   user: AuthUser | null;
   setSession: (session: AuthSession) => void;
+  login: (email: string, password: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    displayName: string,
+    organizationName: string,
+  ) => Promise<void>;
   signOut: () => void;
+  logout: () => void;
 };
 
 const storageKey = "contractflow.session";
@@ -41,6 +51,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSessionState(nextSession);
   };
 
+  const login = async (email: string, password: string) => {
+    const nextSession = await apiLogin(email, password);
+    setSession(nextSession);
+  };
+
+  const register = async (
+    email: string,
+    password: string,
+    displayName: string,
+    organizationName: string,
+  ) => {
+    const nextSession = await apiRegister({ email, password, displayName, organizationName });
+    setSession(nextSession);
+  };
+
   const signOut = () => {
     window.localStorage.removeItem(storageKey);
     setSessionState(null);
@@ -50,10 +75,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         isReady,
+        isLoading: !isReady,
+        isAuthenticated: !!session,
         session,
         user: session?.user ?? null,
         setSession,
+        login,
+        register,
         signOut,
+        logout: signOut,
       }}
     >
       {children}
