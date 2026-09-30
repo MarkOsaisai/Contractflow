@@ -1,10 +1,7 @@
-import type { NextConfig } from 'next';
-module.exports = {
-  allowedDevOrigins: ['192.168.1.208'],
-};
+import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ['@contractflow/contracts'],
+  transpilePackages: ["@contractflow/contracts-schema"],
 };
 
 export default nextConfig;

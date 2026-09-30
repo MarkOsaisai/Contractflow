@@ -1,9 +1,8 @@
 node_modules
-.next
 dist
-coverage
+.next
+.turbo
 .env
-.env.*
-!.env.example
+.env.local
 *.log
-apps/api/prisma/imports/
+.DS_Store
