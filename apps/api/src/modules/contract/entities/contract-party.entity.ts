@@ -8,6 +8,7 @@ import {
 import { Contract } from './contract';
 import { Company } from '../../identity/entities/company';
 import { BaseCustomEntity } from '../../cross-cutting/entities/base_custom_entity';
+import { IContractPartyEntity } from '../interfaces/contract-party.interface';
 
 export enum PartyType {
   CLIENT = 'client',
@@ -18,7 +19,10 @@ export enum PartyType {
 }
 
 @Entity('contract_party')
-export class ContractParty extends BaseCustomEntity {
+export class ContractParty
+  extends BaseCustomEntity
+  implements IContractPartyEntity
+{
   @Column({ name: 'contract_id', type: 'varchar', length: 26 })
   contractId!: string;
   @ManyToOne(() => Contract, { onDelete: 'CASCADE' })
